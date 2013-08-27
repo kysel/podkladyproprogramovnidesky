@@ -1,0 +1,41 @@
+Drill Station Info File: C:\Documents and settings\rozkosnya\dokumenty\Eagle4\Zd\K019\K019.dri
+
+ Date              : 22.02.2006 07:32:33 
+ Plotfile          : C:\Documents and settings\rozkosnya\dokumenty\Eagle4\Zd\K019\K019.exc
+ Drills            : C:\Documents and settings\rozkosnya\Dokumenty\eagle4\zd\K019\K019.DRL
+ Device            : Excellon drill station
+
+Parameter settings:
+
+ Tolerance Drill + :  0.00 %
+ Tolerance Drill - :  0.00 %
+ Rotate            : no
+ Mirror            : no
+ Optimize          : yes
+ Auto fit          : no
+ OffsetX           : 0.000
+ OffsetY           : 0.000
+ Layers            : Drills Holes
+
+Drill File Info:
+
+ Data Mode         : Absolute
+ Units             : 1/1000 Inch
+ End Of Block      : CR/LF
+
+Drills used:
+
+ Code  Size       used
+
+ T01   0.020in     989
+ T02   0.024in       2
+ T03   0.028in      38
+ T04   0.032in    3632
+ T05   0.036in      18
+ T06   0.040in      25
+ T07   0.043in     721
+ T08   0.126in       2
+ T09   0.200in       6
+
+Total number of drills: 5433
+
