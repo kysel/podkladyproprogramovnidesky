@@ -59,7 +59,10 @@ format_t pc;
 #define ledGT	TOGGLEBIT(PORTC,2);
 #define ledRT	TOGGLEBIT(PORTC,3);
 
-uint8_t pfi [8];		//half-port forwad array
+#define csL	CLEARBIT(PORTC,7);
+#define csH SETBIT(PORTC,7);
+
+uint8_t pf [4];		//port forwad array
 uint64_t out [7];		//out cache
 uint64_t in [4];		//inp cache
 
@@ -136,7 +139,187 @@ class ee_t
 		tmp8 = i2c_readNak();
 		return tmp8;
 	}
-}ee;
+};
+
+class spiEe_t
+{
+	private:
+		uint8_t rw(uint8_t dt=0xff)
+		{
+			SPDR = dt;
+			while(!(SPSR & (1 << SPIF)));
+			return SPDR;
+		}
+	public:
+		void init()
+		{
+			SPCR = (1<<SPE)|(1<<MSTR);
+			SPSR = (1<<SPI2X);
+			csH
+		}
+		
+		inline void writing()
+		{
+			pc<<BITSET(readStatus(),0);
+			while BITSET(readStatus(),0) {pc<<BITSET(readStatus(),0);}
+		}
+		
+		uint8_t readByte(uint16_t address)
+		{
+			uint8_t data = 0;
+			csL
+			rw(3);
+			rw(address>>8);
+			rw(address);
+			data = rw(0xff);
+			csH
+			return data;
+		}
+		
+		uint16_t readWord(uint16_t address)
+		{
+			uint16_t data = 0;
+			csL
+			rw(3);
+			rw(address>>8);
+			rw(address);
+			data = uint16_t(rw(0xff))<<8;
+			data += rw();
+			csH
+			return data;
+		}
+		
+		void setAddress(uint16_t add=0)
+		{
+			csL
+			rw(3);
+			rw(add>>8);
+			rw(add);
+		}
+		
+		uint8_t readNextByte()
+		{
+			return rw();
+		}
+		
+		uint16_t readNextWord()
+		{
+			return uint16_t(rw()<<8 | rw());
+		}
+		
+		void endNext()
+		{
+			csH;
+		}		
+		
+		void enableWrite()
+		{
+			csL
+			SPDR = 0x06;
+			while(!(SPSR & (1 << SPIF)))
+				_delay_loop_1(1);
+			uint8_t tmp = SPDR;
+			csH
+		}
+		
+		uint8_t readStatus()
+		{
+			uint8_t tmp = 0;
+			csL
+			rw(5);
+			tmp = rw(0);
+			csH
+			return tmp;
+		}
+		
+		void writeByte(uint16_t address, uint8_t data)
+		{
+			csL
+			rw(0x01);
+			rw(0x02);
+			csH
+			
+			csL
+			rw(0x06);
+			csH
+			
+			csL
+			rw(0x02);
+			rw(address>>8);
+			rw(address);
+			rw(data);
+			csH
+		}
+		
+		void writeWord(uint16_t address, uint16_t data)
+		{
+			csL
+			rw(0x01);
+			rw(0x02);
+			csH
+					
+			csL
+			rw(0x06);
+			csH
+					
+			csL
+			rw(0x02);
+			rw(address>>8);
+			rw(address);
+			rw(data>>8);
+			rw(data);
+			csH
+		}
+		
+		void writeDWord(uint16_t address, uint32_t data)
+		{
+			csL
+			rw(0x01);
+			rw(0x02);
+			csH
+			
+			csL
+			rw(0x06);
+			csH
+			
+			csL
+			rw(0x02);
+			rw(address>>8);
+			rw(address);
+			rw(data>>24);
+			rw(data>>16);
+			rw(data>>8);
+			rw(data);
+			csH
+		}
+
+		void writeQWord(uint16_t address, uint64_t data)
+		{
+			csL
+			rw(0x01);
+			rw(0x02);
+			csH
+			
+			csL
+			rw(0x06);
+			csH
+			
+			csL
+			rw(0x02);
+			rw(address>>8);
+			rw(address);
+			rw(data>>56);
+			rw(data>>48);
+			rw(data>>40);
+			rw(data>>32);
+			rw(data>>24);
+			rw(data>>16);
+			rw(data>>8);
+			rw(data);
+			csH
+		}
+}spiEe;
+
 class input_t
 {	
 	bool reading=true;
@@ -147,6 +330,7 @@ class input_t
 		inline uint8_t read(void)	{
 			DDRA=0;
 			CLEARBIT(PORTC,0);
+			asm ("nop");
 			asm ("nop");
 			asm ("nop");
 			data=PINA;
@@ -226,15 +410,15 @@ class input_t
 			}
 		}
 		
-		inline uint64_t readCache(const uint8_t add)	{
+		inline uint64_t RCOut(const uint8_t add)	{
 			return out[add];
 		}
 		
 		inline void cacheOut(const uint16_t add)	{
-			SETBIT(out[add / 64], add % 64);
+			SETBIT(out[add / 100], add % 64);
 		}
 		
-		inline void cacheOut(const uint8_t add, const uint8_t data)		{
+		/*inline void cacheOut(const uint8_t add, const uint8_t data)		{
 			out[add / 8] |= uint64_t(data << ((add / 8) * 8));
 		}		
 		
@@ -244,10 +428,12 @@ class input_t
 		
 		inline void cacheOut(const uint8_t add, const uint32_t data)	{
 			out[add / 2] |= uint64_t(data << ((add / 2) * 32));
-		}	
+		}	*/
 		
 		inline void cacheOut(const uint8_t add, const uint64_t data)	{
-			out[add] |= data;
+			if(add == 0) 
+				return;
+			out[add-1] |= data;
 		}
 		
 				
@@ -263,23 +449,27 @@ class input_t
 			in[add / 2] |= uint64_t(data << ((add / 2) * 32));
 		}	*/
 		
-		inline uint64_t cacheIn(const uint8_t add, const uint64_t data)		{
-			in[add] |= data;
-			return data;
+		uint64_t RCIn(const uint8_t add)		{
+			return in[add];
 		}		
 		
 		inline void load()	{
 			for(int i=0; i!=4; i++)
-				cacheIn(i, readQWord(i*8));
+				in[i] = readQWord(i*8);
 		}
 		
 		inline void push()	{
-			for(int i=0; i!=4; i++)
-				writeQWord(i, out[i]);
+			for(int i=0; i!=7; i++)
+			{
+				writeQWord((i*8), out[i]);
+				out[i] = 0;
+			}
 		}
 		
-		inline void pud(){
-			uint8_t fw = ee.readByte(0);
+		inline void pud() //open stream & set EE add to 0 !
+		{
+			spiEe.setAddress();
+			uint8_t fw = spiEe.readNextByte();
 			for (int i=0; i!=4; i++)
 			{
 				if (BITVAL(fw, i))
@@ -288,22 +478,42 @@ class input_t
 		}
 }io;
 
+long IntPower(int x, short power)
+{
+	if (power == 0) return 1;
+	if (power == 1) return x;
+	// ----------------------
+	int n = 15;
+	while ((power <<= 1) >= 0) n--;
 
+	long tmp = x;
+	while (--n > 0)
+	tmp = tmp * tmp *
+	(((power <<= 1) < 0)? x : 1);
+	return tmp;
+}
 
 bool init()
 {
+	MCUCSR = (1<<JTD);
+	MCUCSR = (1<<JTD);
 	SETBIT(DDRB,4);
+	SETBIT(DDRB,5);
+	SETBIT(DDRB,7);
+	SETBIT(DDRC,0);
+	SETBIT(DDRC,1);
 	SETBIT(DDRC,2);
 	SETBIT(DDRC,3);
-	DDRC=0xff;
+	SETBIT(DDRC,7);
 	DDRD=0xfe;
 	SETBIT(PORTC,0);
 	SETBIT(PORTC,1);
+	SETBIT(PORTC,4);
 	rs232.init(115200);
-	ee.init();
-	for (int i=0; i!=8; i++)
+	spiEe.init();
+	for (int i=1; i!=5; i++)
 	{
-		pfi[i]=ee.readByte(i);
+		pf[i]=spiEe.readByte(i);
 	}
 	ledROFF
 	for (int i=0; i!=5; i++)

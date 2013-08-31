@@ -8,5 +8,8 @@
     <Setting Name="Tick" Type="System.UInt32" Scope="User">
       <Value Profile="(Default)">50</Value>
     </Setting>
+    <Setting Name="csvPath" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
   </Settings>
 </SettingsFile>

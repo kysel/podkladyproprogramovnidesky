@@ -20,44 +20,33 @@ namespace IOView
             InitializeComponent();
         }
 
-        private void Start_Click(object sender, EventArgs e)
+        public void Start_Click(object sender, EventArgs e)
         {
-            if (connected)
-            {                
-                SP1.Close();
-                Start.Text = "připojit";
-                lb1SetText("odpojeno");
-                connected = false;
-                timer1.Stop();
-            }
-            else
+            try
             {
-                try
-                {
-
-                    SP1.PortName = "COM" + Convert.ToString(Pref.Default.ComPort);
-                    SP1.Open();
-                    SP1.Write("i");
-                    connecting = true;
-                    Start.Text = "odpojit";
-                    lb1SetText("připojeno");
-                }
-                catch
-                {
-                    lb1.Text = "nelze otevřít port";
-                }
-                timer1.Interval = (int)Pref.Default.Tick;
-                timer1.Start();
+                SP1.PortName = "COM" + Convert.ToString(Pref.Default.ComPort);
+                SP1.Open();
             }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, "Nepodařilo se otevřít com port, prosím zkontrolujte ostatní aplikace, jestli jej nevyužívají.\r\n" + ex.Message, "Varhany IOConfig", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            SP1.Write("i");
+            connecting = true;
+            lb1SetText("připojeno");
+            timer1.Interval = (int)Pref.Default.Tick;
+            timer1.Start();
         }
 
         private void UpdateImg(ulong[] data)
         {
-            Bitmap bmp = new Bitmap(576, 100);
+            Bitmap bmp = new Bitmap(576, 275);
             Graphics port = Graphics.FromImage(bmp);
             Font fnt = new Font("Arial", 9);
 
-            for (int j = 0; j != 4; j++)
+            for (int j = 0; j != 11; j++)
             {
                 for (int i = 0; i != 32; i++)
                 {
@@ -94,7 +83,7 @@ namespace IOView
             if (connected)
                 SP1.Write("i");
             else
-                Start.PerformClick();
+                bDisconnect.PerformClick();
             timer1.Interval = (int)Pref.Default.Tick;
         }
 
@@ -128,21 +117,32 @@ namespace IOView
             {
                 try
                 {
+                    sp.ReadExisting();
                     if (sp.ReadChar() == 'a')
                     {
-                        ulong[] inpData = new ulong[4];
-                        for (int i = 0; i != 4; i++)
+                        System.Threading.Thread.Sleep(2);
+                        if (sp.BytesToRead > 176)
                         {
-                            inpData[i] = Convert.ToUInt64(sp.ReadLine());
+                            ulong[] inpData = new ulong[11];
+                            for (int i = 0; i != 11; i++)
+                            {
+                                if (!ulong.TryParse(sp.ReadLine().Trim(), out inpData[i]))
+                                {
+                                    sp.ReadExisting();
+                                    break;
+                                }
+
+                            }
+                            sp.ReadExisting();
+                            UpdateImg(inpData);
                         }
-                        sp.ReadExisting();
-                        UpdateImg(inpData);
                     }
                 }
-                catch 
+                catch(Exception ex)
                 {
-                    lb1SetText("catch exeption");
+                    lb1SetText("catch exeption" + ex.Message);
                     timer1.Stop();
+                    return;
                 }
             }
         }
@@ -176,11 +176,28 @@ namespace IOView
 
         private void bConf_Click(object sender, EventArgs e)
         {
+            if (connected)
+                Start.PerformClick();
             IOConfig IOconfig = new IOConfig();
             IOconfig.Show();
         }
-    }
-    
+
+        private void bDisconnect_Click(object sender, EventArgs e)
+        {
+            connected = false;
+            connecting = false;
+            timer1.Stop();
+            if (SP1 != null)
+            {
+                if (SP1.IsOpen)
+                {
+                    SP1.Close();
+                }
+                SP1.Dispose();
+            }
+            lb1.Text = "odpojeno";
+        }
+    }    
     public static class update
     {
         public static void SynchronizedInvoke(this ISynchronizeInvoke sync, Action action)

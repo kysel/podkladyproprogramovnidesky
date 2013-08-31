@@ -46,5 +46,17 @@ namespace IOView {
                 this["Tick"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string csvPath {
+            get {
+                return ((string)(this["csvPath"]));
+            }
+            set {
+                this["csvPath"] = value;
+            }
+        }
     }
 }
