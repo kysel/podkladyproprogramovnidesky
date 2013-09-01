@@ -56,6 +56,7 @@
             // 
             // PbInput0
             // 
+            this.PbInput0.BackgroundImage = global::IOView.Properties.Resources.IOViewBg;
             this.PbInput0.Location = new System.Drawing.Point(62, 12);
             this.PbInput0.Name = "PbInput0";
             this.PbInput0.Size = new System.Drawing.Size(576, 275);

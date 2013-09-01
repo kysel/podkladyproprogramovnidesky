@@ -421,6 +421,7 @@ namespace IOView
                 SP1.DiscardInBuffer();
                 SP1.DiscardOutBuffer();
                 {
+                    SP1.WriteLine("0");
                     string read = sIn.ReadLine();
                     string[] write = read.Split(';');
                     SP1.WriteLine(write[0]);
@@ -530,6 +531,12 @@ namespace IOView
         private void IOConfig_FormClosing(object sender, FormClosingEventArgs e)
         {
             
+        }
+
+        private void nápovědaToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            HelpConfig HlpCfg = new HelpConfig();
+            HlpCfg.Show();
         }        
 
     }

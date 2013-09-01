@@ -160,8 +160,7 @@ class spiEe_t
 		
 		inline void writing()
 		{
-			pc<<BITSET(readStatus(),0);
-			while BITSET(readStatus(),0) {pc<<BITSET(readStatus(),0);}
+			while BITVAL(readStatus(),0) {}
 		}
 		
 		uint8_t readByte(uint16_t address)
@@ -332,7 +331,6 @@ class input_t
 			CLEARBIT(PORTC,0);
 			asm ("nop");
 			asm ("nop");
-			asm ("nop");
 			data=PINA;
 			SETBIT(PORTC,0);
 			return data;
@@ -342,6 +340,7 @@ class input_t
 			DDRA=0xff;
 			PORTA=data;
 			CLEARBIT(PORTC,1);
+			asm ("nop");
 			SETBIT(PORTC,1);
 		}
 	
@@ -415,7 +414,7 @@ class input_t
 		}
 		
 		inline void cacheOut(const uint16_t add)	{
-			SETBIT(out[add / 100], add % 64);
+			SETBIT(out[((add - 100) / 100)], ((add/100*64) % 64));
 		}
 		
 		/*inline void cacheOut(const uint8_t add, const uint8_t data)		{
@@ -459,9 +458,20 @@ class input_t
 		}
 		
 		inline void push()	{
+			uint8_t tmp = spiEe.readByte(1);
 			for(int i=0; i!=7; i++)
 			{
-				writeQWord((i*8), out[i]);
+				writeQWord((i*8), BITVAL(tmp,i) ? out[i] : ~out[i]);
+				out[i] = 0;
+			}
+		}
+		
+		inline void dbgPush()	{
+			uint8_t tmp = spiEe.readByte(1);
+			for(int i=0; i!=7; i++)
+			{
+				writeQWord((i*8), (BITVAL(tmp,i) ? out[i] : ~out[i]));
+				pc<<(BITVAL(tmp,i) ? out[i] : ~out[i])<<endl;
 				out[i] = 0;
 			}
 		}
@@ -471,10 +481,7 @@ class input_t
 			spiEe.setAddress();
 			uint8_t fw = spiEe.readNextByte();
 			for (int i=0; i!=4; i++)
-			{
-				if (BITVAL(fw, i))
-					in[i] = ~in[i];
-			}
+				in[i] = (BITVAL(fw,i) ? in[i] : ~in[i]);
 		}
 }io;
 

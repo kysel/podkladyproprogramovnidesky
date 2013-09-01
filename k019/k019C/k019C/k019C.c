@@ -10,39 +10,13 @@
 #include <avr/interrupt.h>
 #include "K019.h"
 
-bool dbg = false;
-
 inline void fwPort()
 {
 	for (int i=0; i!=4; i++)
 		io.cacheOut(spiEe.readByte(i+2),in[i]);
 }
 
-void fwPin()
-{
-	uint16_t dest;
-	uint8_t from;
-	for(int i=0; i!= 32; i++)
-	{
-		if(BITVAL(in[4],32 + i))
-		{
-			from = spiEe.readByte(i + EFM);
-			for(int j=0; j!=64; j++)
-			{		
-				if (BITVAL(in[from], j))
-				{
-					dest = spiEe.readWord((i * j) + 32 + EFM);
-					if(dest)
-						break;
-					else
-						io.cacheOut(dest);
-				}
-			}
-		}
-	}
-}
-
-void fw()
+void fw(bool dbg = false, bool ioV = false)
 {
 	ledGON
 	
@@ -58,9 +32,12 @@ void fw()
 		}
 	io.pud();	//set ee add to 0
 	spiEe.endNext();
-		if (dbg)
+		if (dbg || ioV)
 		{
-			pc<<"after PUD"<<endl;
+			if(dbg)
+				pc<<"after PUD"<<endl;
+			else
+				pc<<"a";
 			for (int i=0; i!=4; i++)
 			{
 				pc<<io.RCIn(i)<<endl;
@@ -96,18 +73,21 @@ void fw()
 	uint16_t dest;
 	for (int f=0; f!=32; f++)
 	{
-		if (BITSET(io.RCIn(3), f))
+		if (BITVAL(io.RCIn(3),f))
 		{
-			pc<<"b set: "<<f<<endl;
+			if(dbg)
+				pc<<"b set: "<<f<<endl;
 			spiEe.setAddress(6 + f);
 			from = spiEe.readNextByte();
 			spiEe.endNext();
 			
-			spiEe.setAddress(f * 64 + 26);
+			spiEe.setAddress((f * 128) + 38);
 			for (int i=0; i!=64; i++)
 			{
 				dest = spiEe.readNextWord();
-				if (dest != 0 && BITSET(io.RCIn(from),i))
+				if(dbg)
+					pc<<"i: "<<i<<" dest: "<<dest<<" a: "<<uint16_t((f * 128) + 38)<<endl; pc.wait();
+				if (dest != 0 && BITVAL(io.RCIn(from-1),i))
 					io.cacheOut(dest);
 			}
 			spiEe.endNext();
@@ -123,8 +103,12 @@ void fw()
 				pc.wait();
 			}
 		}
-	
-	io.push();
+	if(dbg)
+		pc<<"dbgPush :D :"<<endl;	
+	if (dbg || ioV)
+		io.dbgPush();
+	else
+		io.push();
 	ledGOFF
 }
 
@@ -138,12 +122,19 @@ void downConf()
 	ledRT
 	_delay_ms(500);
 	ledRT
-	uint8_t dataIn = pc.get();
+	uint8_t dataIn = 0;
 	while (dataIn != 'c')
 	{		
 		dataIn = pc.get();
 	}
 	pc.send("a");
+	
+	while (dataIn != 0x0a)
+	{
+		dataIn = pc.get();
+	}
+	
+	_delay_ms(50);
 
 	while (zapis)
 	{
@@ -163,7 +154,7 @@ void downConf()
 			}
 			n = 0;
 			spiEe.writeByte((add++), recv);
-			_delay_ms(5);
+			spiEe.writing();
 			pc.send("a");
 		}
 		else
@@ -193,9 +184,9 @@ void downConf()
 			}
 			n = 0;	
 			spiEe.writeByte(add++, uint8_t(recv>>8));
-			_delay_ms(5);
+			spiEe.writing();
 			spiEe.writeByte(add++, uint8_t(recv));
-			_delay_ms(5);
+			spiEe.writing();
 			pc<<"a";
 		}
 		else
@@ -225,9 +216,7 @@ void ioView()
 	io.load();
 	io.pud();
 	spiEe.endNext();
-	
-	//fwPin();
-	//fwPort();
+
 	
 	for (int i=0; i!=4; i++)
 		pc<<io.RCIn(i)<<endl;
@@ -248,8 +237,10 @@ void eraseEe()
 	{
 		ledRT
 		pc<<i<<endl;
+		pc.wait();
 		spiEe.writeByte(i,0xff);
-		_delay_ms(2);
+		spiEe.writing();
+		pc.wait();
 	}
 	ledROFF
 }
@@ -286,37 +277,23 @@ int main(void)
 	//ioView();
 	while(1)
     {
-		while(!BITSET(PINC,4))
+		while(!BITVAL(PINC,4))
 		{
-			dbg = true;
 			ledRT	
 				switch (pc.get())
 				{
-					case 'i'	:	ioView();	break;
+					case 'i'	:	fw(false, true)		;break;
 					case 'd'	:	downConf(); break;
 					case 'r'	:	readEe();	break;
 					case 'e'	:	eraseEe();	break;
-					case 'x'	:	fw();	break;
+					case 'x'	:	fw(true);	break;
 				}	
 			ledROFF			
 		}	
 		ledRT
-		dbg = false;
 		
-		pc<<io.readByte(0)<<endl;
-		_delay_ms(1000);
-		//pc.get();
-		//pc<<"a";			
-	
-		/*for (long i=0; i!=32767; i++)
-		{
-			pc.send_char_immediately(spiEe.readByte(i));
-		}*/
-		/*for (int i=0; i!=4; i++)
-		{
-			io.cacheOut(i,io.readQWord(i));
-		}
-		io.write();
-		ledRT*/
+		fw();
+		
+		
     }
 }

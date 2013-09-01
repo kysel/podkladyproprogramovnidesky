@@ -120,7 +120,7 @@
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
             this.menuStrip1.RenderMode = System.Windows.Forms.ToolStripRenderMode.System;
-            this.menuStrip1.Size = new System.Drawing.Size(263, 24);
+            this.menuStrip1.Size = new System.Drawing.Size(355, 24);
             this.menuStrip1.TabIndex = 10;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -174,7 +174,7 @@
             // nastaveníToolStripMenuItem
             // 
             this.nastaveníToolStripMenuItem.Name = "nastaveníToolStripMenuItem";
-            this.nastaveníToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.nastaveníToolStripMenuItem.Size = new System.Drawing.Size(126, 22);
             this.nastaveníToolStripMenuItem.Text = "Nastavení";
             this.nastaveníToolStripMenuItem.Click += new System.EventHandler(this.nastaveníToolStripMenuItem_Click);
             // 
@@ -213,8 +213,9 @@
             // nápovědaToolStripMenuItem
             // 
             this.nápovědaToolStripMenuItem.Name = "nápovědaToolStripMenuItem";
-            this.nápovědaToolStripMenuItem.Size = new System.Drawing.Size(139, 22);
+            this.nápovědaToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.nápovědaToolStripMenuItem.Text = "Nápověda";
+            this.nápovědaToolStripMenuItem.Click += new System.EventHandler(this.nápovědaToolStripMenuItem_Click);
             // 
             // oProgramuToolStripMenuItem
             // 
@@ -249,7 +250,7 @@
             "Port 2",
             "Port 3",
             "Port 4"});
-            this.clbPullUps.Location = new System.Drawing.Point(394, 164);
+            this.clbPullUps.Location = new System.Drawing.Point(394, 201);
             this.clbPullUps.Name = "clbPullUps";
             this.clbPullUps.Size = new System.Drawing.Size(60, 64);
             this.clbPullUps.TabIndex = 13;
@@ -257,11 +258,11 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(391, 148);
+            this.label1.Location = new System.Drawing.Point(394, 172);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(93, 13);
+            this.label1.Size = new System.Drawing.Size(66, 26);
             this.label1.TabIndex = 14;
-            this.label1.Text = "Pull-up (odpor k +)";
+            this.label1.Text = "vstupy\r\nlog 1 je 5V ?";
             // 
             // lOpenFile
             // 
@@ -285,7 +286,7 @@
             "Port 5",
             "Port 6",
             "Port 7"});
-            this.clbLogLevel.Location = new System.Drawing.Point(394, 257);
+            this.clbLogLevel.Location = new System.Drawing.Point(394, 297);
             this.clbLogLevel.Name = "clbLogLevel";
             this.clbLogLevel.Size = new System.Drawing.Size(60, 109);
             this.clbLogLevel.TabIndex = 16;
@@ -293,11 +294,11 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(391, 241);
+            this.label2.Location = new System.Drawing.Point(394, 268);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(70, 13);
+            this.label2.Size = new System.Drawing.Size(66, 26);
             this.label2.TabIndex = 17;
-            this.label2.Text = "Log 1 je 5V ?";
+            this.label2.Text = "výstupy\r\nlog 1 je 5V ?";
             // 
             // dgvPortFw
             // 

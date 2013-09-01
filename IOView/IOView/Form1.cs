@@ -109,7 +109,7 @@ namespace IOView
                 }
                 catch
                 {
-                    lb1.Text = "nelze se připojit k procesoru";
+                    lb1SetText("nelze se připojit k procesoru");
                 }
                 sp.DiscardInBuffer();
             }
@@ -117,7 +117,7 @@ namespace IOView
             {
                 try
                 {
-                    sp.ReadExisting();
+                    //sp.DiscardInBuffer();
                     if (sp.ReadChar() == 'a')
                     {
                         System.Threading.Thread.Sleep(2);
@@ -133,7 +133,7 @@ namespace IOView
                                 }
 
                             }
-                            sp.ReadExisting();
+                            sp.DiscardInBuffer();
                             UpdateImg(inpData);
                         }
                     }
