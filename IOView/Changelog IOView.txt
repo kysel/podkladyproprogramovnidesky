@@ -1,0 +1,15 @@
+ 
+v 0.3 
+	-csv export
+	-IOView display inputs & outputs at same time
+	-added remote control feature
+	-fixed minor bugs
+
+v 0.2
+	-added IOConfig
+	-csv import and parsing compatibility
+	-fixed major bugs
+
+v 0.1
+	-only IOView
+	-only inputs

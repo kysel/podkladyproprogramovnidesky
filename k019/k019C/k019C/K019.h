@@ -48,6 +48,11 @@ format_t pc;
 #define pL	20
 #define pM	21
 
+#define	cDelay 500		// delay pro dlouhej stisk na DO
+#define sMove	1		// posun pri krátkým stisku
+#define bMove	64		// posun pøi dlouhým stisku
+ 
+
 #define EeAdd	0xA0
 
 #define EFM		10		//posunuti adresy fwPin
@@ -66,7 +71,7 @@ uint8_t pf [4];		//port forwad array
 uint64_t out [7];		//out cache
 uint64_t in [4];		//inp cache
 
-class ee_t
+/*class ee_t
 {
 	uint8_t tmp8;
 	uint16_t tmp16;
@@ -139,7 +144,7 @@ class ee_t
 		tmp8 = i2c_readNak();
 		return tmp8;
 	}
-};
+};*/
 
 class spiEe_t
 {
@@ -158,7 +163,7 @@ class spiEe_t
 			csH
 		}
 		
-		inline void writing()
+		void writing()
 		{
 			while BITVAL(readStatus(),0) {}
 		}
@@ -270,58 +275,10 @@ class spiEe_t
 			csH
 		}
 		
-		void writeDWord(uint16_t address, uint32_t data)
-		{
-			csL
-			rw(0x01);
-			rw(0x02);
-			csH
-			
-			csL
-			rw(0x06);
-			csH
-			
-			csL
-			rw(0x02);
-			rw(address>>8);
-			rw(address);
-			rw(data>>24);
-			rw(data>>16);
-			rw(data>>8);
-			rw(data);
-			csH
-		}
-
-		void writeQWord(uint16_t address, uint64_t data)
-		{
-			csL
-			rw(0x01);
-			rw(0x02);
-			csH
-			
-			csL
-			rw(0x06);
-			csH
-			
-			csL
-			rw(0x02);
-			rw(address>>8);
-			rw(address);
-			rw(data>>56);
-			rw(data>>48);
-			rw(data>>40);
-			rw(data>>32);
-			rw(data>>24);
-			rw(data>>16);
-			rw(data>>8);
-			rw(data);
-			csH
-		}
 }spiEe;
 
 class input_t
 {	
-	bool reading=true;
 	uint32_t tmp;
 	uint8_t i;
 	uint8_t data;
@@ -339,7 +296,9 @@ class input_t
 		inline void write(const uint8_t data)	{
 			DDRA=0xff;
 			PORTA=data;
+			asm ("nop");
 			CLEARBIT(PORTC,1);
+			asm ("nop");
 			asm ("nop");
 			SETBIT(PORTC,1);
 		}
@@ -376,22 +335,16 @@ class input_t
 			}
 			return temp;
 		}
-		
-		inline void write(){
-			for (int i=0; i!=4; i++)
-				writeQWord(i*8,out[i]);
-		}
-		
-		inline void writeByte(uint8_t add, const uint8_t data)
+				
+		void writeByte(uint8_t add, const uint8_t data)
 		{
 			if (add>23)
 				add+=8;
-			tmp=((7 - (add % 8)) + (add / 8) * 8);
-			PORTD = (((tmp % 8) << 2 | (tmp / 8) << 5) & 0xfc);
+			PORTD = (((add % 8) << 2 | (add / 8) << 5) & 0xfc);
 			write(data);
 		}
 		
-		inline void writeDWord(const uint8_t add, uint32_t data)
+		void writeDWord(const uint8_t add, uint32_t data)
 		{
 			for (i=0; i!=4; i++)
 			{
@@ -400,7 +353,7 @@ class input_t
 			}
 		}
 
-		inline void writeQWord(const uint8_t add, uint64_t data)
+		void writeQWord(const uint8_t add, uint64_t data)
 		{
 			for (i=0; i!=8; i++)
 			{
@@ -417,17 +370,9 @@ class input_t
 			SETBIT(out[((add - 100) / 100)], ((add/100*64) % 64));
 		}
 		
-		/*inline void cacheOut(const uint8_t add, const uint8_t data)		{
-			out[add / 8] |= uint64_t(data << ((add / 8) * 8));
-		}		
-		
-		inline void cacheOut(const uint8_t add, const uint16_t data)	{
-			out[add / 4] |= uint64_t(data << ((add / 4) * 16));
-		}		
-		
-		inline void cacheOut(const uint8_t add, const uint32_t data)	{
-			out[add / 2] |= uint64_t(data << ((add / 2) * 32));
-		}	*/
+		void bitOut(const uint16_t add){
+			SETBIT(out[add / 64], add % 64);
+		}
 		
 		inline void cacheOut(const uint8_t add, const uint64_t data)	{
 			if(add == 0) 
@@ -457,26 +402,27 @@ class input_t
 				in[i] = readQWord(i*8);
 		}
 		
-		inline void push()	{
+		void push()	{
 			uint8_t tmp = spiEe.readByte(1);
 			for(int i=0; i!=7; i++)
 			{
-				writeQWord((i*8), BITVAL(tmp,i) ? out[i] : ~out[i]);
+				writeQWord((i), BITVAL(tmp,i) ? out[i] : ~out[i]);
 				out[i] = 0;
 			}
 		}
 		
-		inline void dbgPush()	{
+		void dbgPush()	{
 			uint8_t tmp = spiEe.readByte(1);
 			for(int i=0; i!=7; i++)
 			{
-				writeQWord((i*8), (BITVAL(tmp,i) ? out[i] : ~out[i]));
-				pc<<(BITVAL(tmp,i) ? out[i] : ~out[i])<<endl;
+				writeQWord((i), (BITVAL(tmp,i) ? out[i] : ~out[i]));
+				pc<<uint64_t(BITVAL(tmp,i) ? out[i] : ~out[i])<<endl;
+				pc.wait();
 				out[i] = 0;
 			}
 		}
 		
-		inline void pud() //open stream & set EE add to 0 !
+		void pud() //open stream & set EE add to 0 !
 		{
 			spiEe.setAddress();
 			uint8_t fw = spiEe.readNextByte();
@@ -495,7 +441,7 @@ long IntPower(int x, short power)
 
 	long tmp = x;
 	while (--n > 0)
-	tmp = tmp * tmp *
+		tmp = tmp * tmp *
 	(((power <<= 1) < 0)? x : 1);
 	return tmp;
 }
@@ -512,16 +458,15 @@ bool init()
 	SETBIT(DDRC,2);
 	SETBIT(DDRC,3);
 	SETBIT(DDRC,7);
+	PORTE = 0x07;
+	
 	DDRD=0xfe;
 	SETBIT(PORTC,0);
 	SETBIT(PORTC,1);
 	SETBIT(PORTC,4);
 	rs232.init(115200);
 	spiEe.init();
-	for (int i=1; i!=5; i++)
-	{
-		pf[i]=spiEe.readByte(i);
-	}
+
 	ledROFF
 	for (int i=0; i!=5; i++)
 	{

@@ -58,5 +58,17 @@ namespace IOView {
                 this["csvPath"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0.3")]
+        public string Verze {
+            get {
+                return ((string)(this["Verze"]));
+            }
+            set {
+                this["Verze"] = value;
+            }
+        }
     }
 }

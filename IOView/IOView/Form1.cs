@@ -18,6 +18,7 @@ namespace IOView
         public Form1()
         {
             InitializeComponent();
+            bDisconnect.Enabled = false;
         }
 
         public void Start_Click(object sender, EventArgs e)
@@ -38,6 +39,8 @@ namespace IOView
             lb1SetText("připojeno");
             timer1.Interval = (int)Pref.Default.Tick;
             timer1.Start();
+            Start.Enabled = false;
+            bDisconnect.Enabled = true;
         }
 
         private void UpdateImg(ulong[] data)
@@ -196,6 +199,8 @@ namespace IOView
                 SP1.Dispose();
             }
             lb1.Text = "odpojeno";
+            bDisconnect.Enabled = false;
+            Start.Enabled = true;
         }
     }    
     public static class update

@@ -86,12 +86,12 @@
             // lb1
             // 
             this.lb1.AutoSize = true;
-            this.lb1.Location = new System.Drawing.Point(12, 293);
+            this.lb1.Location = new System.Drawing.Point(62, 290);
             this.lb1.Name = "lb1";
             this.lb1.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
-            this.lb1.Size = new System.Drawing.Size(19, 13);
+            this.lb1.Size = new System.Drawing.Size(28, 13);
             this.lb1.TabIndex = 3;
-            this.lb1.Text = "    ";
+            this.lb1.Text = "       ";
             this.lb1.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // button1
@@ -168,7 +168,7 @@
             this.bHelp.Name = "bHelp";
             this.bHelp.Size = new System.Drawing.Size(75, 23);
             this.bHelp.TabIndex = 13;
-            this.bHelp.Text = "pomoc";
+            this.bHelp.Text = "nápověda";
             this.bHelp.UseVisualStyleBackColor = true;
             this.bHelp.Click += new System.EventHandler(this.bHelp_Click);
             // 
@@ -266,7 +266,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(725, 472);
+            this.ClientSize = new System.Drawing.Size(725, 313);
             this.Controls.Add(this.bDisconnect);
             this.Controls.Add(this.label12);
             this.Controls.Add(this.label11);
@@ -289,7 +289,7 @@
             this.Controls.Add(this.PbInput0);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
             this.Name = "Form1";
-            this.Text = "Varhany IOView © 2013 Jiří Kyzlink";
+            this.Text = "IOView © 2013 Jiří Kyzlink";
             ((System.ComponentModel.ISupportInitialize)(this.PbInput0)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();

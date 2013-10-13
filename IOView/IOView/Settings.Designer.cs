@@ -136,7 +136,7 @@
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.Name = "Settings";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Settings";
+            this.Text = "Nastavení";
             ((System.ComponentModel.ISupportInitialize)(this.nudTick)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.nudComPort)).EndInit();
             this.ResumeLayout(false);

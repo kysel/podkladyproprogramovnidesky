@@ -7,14 +7,12 @@
 
 #include <math.h>
 #include <avr/io.h>
+#include <stdint.h>
 #include <avr/interrupt.h>
 #include "K019.h"
 
-inline void fwPort()
-{
-	for (int i=0; i!=4; i++)
-		io.cacheOut(spiEe.readByte(i+2),in[i]);
-}
+
+uint16_t bit=0;
 
 void fw(bool dbg = false, bool ioV = false)
 {
@@ -23,7 +21,7 @@ void fw(bool dbg = false, bool ioV = false)
 	io.load();
 		if (dbg)
 		{
-			pc<<"bfr pud:"<<endl;
+			pc<<"b pud:"<<endl;
 			for (int i=0; i!=4; i++)
 			{
 				pc<<io.RCIn(i)<<endl;
@@ -35,7 +33,7 @@ void fw(bool dbg = false, bool ioV = false)
 		if (dbg || ioV)
 		{
 			if(dbg)
-				pc<<"after PUD"<<endl;
+				pc<<"a PUD"<<endl;
 			else
 				pc<<"a";
 			for (int i=0; i!=4; i++)
@@ -47,7 +45,7 @@ void fw(bool dbg = false, bool ioV = false)
 	// PORT
 		if (dbg)
 		{
-			pc<<"before port"<<endl;
+			pc<<"b port"<<endl;
 			for (int i=0; i!=7; i++)
 			{
 				pc<<io.RCOut(i)<<endl;
@@ -62,7 +60,7 @@ void fw(bool dbg = false, bool ioV = false)
 	spiEe.endNext();
 		if (dbg)
 		{
-			pc<<"after port"<<endl;
+			pc<<"a port"<<endl;
 			for (int i=0; i!=7; i++)
 			{
 				pc<<io.RCOut(i)<<endl;
@@ -86,9 +84,9 @@ void fw(bool dbg = false, bool ioV = false)
 			{
 				dest = spiEe.readNextWord();
 				if(dbg)
-					pc<<"i: "<<i<<" dest: "<<dest<<" a: "<<uint16_t((f * 128) + 38)<<endl; pc.wait();
-				if (dest != 0 && BITVAL(io.RCIn(from-1),i))
-					io.cacheOut(dest);
+					pc<<"i: "<<i<<" d: "<<dest<<" a: "<<uint16_t((f * 128) + 38)<<endl; pc.wait();
+				if (dest != 65535 && BITVAL(io.RCIn(from-1),i))
+					io.bitOut(dest);
 			}
 			spiEe.endNext();
 		}
@@ -104,11 +102,12 @@ void fw(bool dbg = false, bool ioV = false)
 			}
 		}
 	if(dbg)
-		pc<<"dbgPush :D :"<<endl;	
+		pc<<"dbgPush :"<<endl;	
 	if (dbg || ioV)
 		io.dbgPush();
 	else
 		io.push();
+		
 	ledGOFF
 }
 
@@ -255,26 +254,77 @@ void readEe()
 	ledROFF
 }
 
-void eetest()
-{
-	spiEe.setAddress();
-	uint16_t snd;
-	for (int i=0; i != 16384; i++)
+void remoteControlDbg()
+{	
+	for(uint8_t i=1; i!=3; i++)
+	if (!BITVAL(PINE,i))		// 1+, 2-
 	{
-		snd = spiEe.readNextWord();
-		pc.send_char_immediately(snd>>8);
-		pc.send_char_immediately(snd);
-		pc.wait();
+		if(i==1 && (bit + sMove) < 384)
+		{
+			bit += sMove;
+			pc<<"+"<<endl;
+		}
+		else if(!((bit - sMove) < 0) && !((bit - sMove) > 384))
+		{
+			bit -=sMove;
+			pc<<"-"<<endl;
+		}
+		io.bitOut(bit);
+		io.dbgPush();
+		_delay_ms(cDelay);
+		if (!BITVAL(PINE,i))
+		{
+			if(i==1 && (bit + bMove - 1) < 384)
+			{
+				bit += bMove - 1;
+				pc<<"+"<<endl;
+				//pc.wait();
+			}
+			else if(!((bit - bMove - 1) < 0) && !((bit - bMove - 1) > 384))
+			{
+				bit -= bMove - 1;
+				pc<<"-"<<endl;
+				//pc.wait();
+			}			
+			io.bitOut(bit);
+			io.dbgPush();
+		}
+		while(!BITVAL(PINE,i));
 	}
-	spiEe.endNext();
+}
+
+void remoteControl()
+{
+	for(uint8_t i=1; i!=3; i++)
+	if (!BITVAL(PINE,i))		// 1+, 2-
+	{
+		if(i==1 && (bit + sMove) < 384)
+			bit += sMove;
+		else if(!((bit - sMove) < 0) && !((bit - sMove) > 384))
+			bit -=sMove;
+		io.bitOut(bit);
+		io.push();
+		_delay_ms(cDelay);
+		if (!BITVAL(PINE,i))
+		{
+			if(i==1 && (bit + bMove - 1) < 384)
+				bit += bMove - 1;
+			else if(!((bit - bMove - 1) < 0) && !((bit - bMove - 1) > 384))
+				bit -= bMove - 1;
+			io.bitOut(bit);
+			io.push();
+		}
+		while(!BITVAL(PINE,i));
+	}
 }
 
 int main(void)
 {
 	init();	
+	pc<<endl<<"k019 v1.0 JK 2013"<<endl;
 	sei();	
-	char ch;
-	//ioView();
+	ledGON
+	
 	while(1)
     {
 		while(!BITVAL(PINC,4))
@@ -285,15 +335,16 @@ int main(void)
 					case 'i'	:	fw(false, true)		;break;
 					case 'd'	:	downConf(); break;
 					case 'r'	:	readEe();	break;
-					case 'e'	:	eraseEe();	break;
-					case 'x'	:	fw(true);	break;
+					case 'f'	:	pc<<
 				}	
 			ledROFF			
 		}	
-		ledRT
 		
-		fw();
+		while(!BITVAL(PINE,0))	
+				
+			remoteControl();
 		
+		fw();		
 		
     }
 }

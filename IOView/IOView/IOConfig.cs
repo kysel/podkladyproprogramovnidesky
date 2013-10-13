@@ -82,7 +82,7 @@ namespace IOView
                 dgvPorty.Columns[i].SortMode = DataGridViewColumnSortMode.NotSortable;
             
             dgvPorty.Columns[0].ReadOnly = true;
-            dgvPorty.Columns[0].HeaderText = "mód č.";
+            dgvPorty.Columns[0].HeaderText = "funkce č.";
             dgvPorty.Columns[1].HeaderText = "vstupní port č.";
 
            {
@@ -402,7 +402,7 @@ namespace IOView
                 SP1.Open();
                 SP1.Write("d");
                 SP1.DiscardInBuffer();
-
+                    //establish comm
                 while (SP1.BytesToRead==0 || SP1.ReadByte() != 'a')
                 {
                     SP1.Write("d");
@@ -420,6 +420,7 @@ namespace IOView
                 }
                 SP1.DiscardInBuffer();
                 SP1.DiscardOutBuffer();
+                    //connection established 
                 {
                     SP1.WriteLine("0");
                     string read = sIn.ReadLine();
@@ -458,10 +459,10 @@ namespace IOView
                 {
                     string read = sIn.ReadLine();
                     string[] write = read.Split(';');
-                    SP1.WriteLine(write[2]);
+                    int num = write[2] == "0" ? 65535 : Convert.ToInt32(write[2].Remove(0, 1)) * 64 + Convert.ToInt32(write[2].Remove(1));
+                    SP1.WriteLine((Convert.ToInt32(write[2]) + 1).ToString());
                     bwDownload.ReportProgress(j);
                     while (SP1.ReadByte() != 'a') { }
-
                     if (bwDownload.CancellationPending)
                     {
                         SP1.WriteLine("s");
